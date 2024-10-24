@@ -64,12 +64,13 @@ class AI_Type:
                 run_model = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(run_model)
 
-                # Check if the LM Studio server is running
-                if hasattr(run_model, 'is_server_running') and run_model.is_server_running():
-                    return True
+                # Call the 'check' function from run_model
+                if hasattr(run_model, 'check'):
+                    return run_model.check()
                 else:
-                    print("LM Studio server is not running.")
+                    print("LM Studio check function is not available in run_model.py.")
                     return False
+
             except Exception as e:
                 print(f"Error checking LM Studio: {e}")
                 return False
@@ -102,10 +103,27 @@ class AI_Type:
     ####### LOCAL MODELS #######
 
     def check_local_model(self):
-        """Check if the local AI model is available."""
+        """Check if the local model is available and everything is valid."""
         if os.path.exists(self.local_model_path):
-            return True
-        return False
+            try:
+                # Load the run_model.py module dynamically
+                spec = importlib.util.spec_from_file_location("run_model", self.local_model_path)
+                run_model = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(run_model)
+
+                # Call the 'check' function from run_model
+                if hasattr(run_model, 'check'):
+                    return run_model.check()
+                else:
+                    print("Local model check function is not available in run_model.py.")
+                    return False
+
+            except Exception as e:
+                print(f"Error checking local model: {e}")
+                return False
+        else:
+            print("Local model directory or run_model.py does not exist.")
+            return False
 
     def run_local_model(self, user_message):
         """Run the local AI model."""

@@ -14,16 +14,37 @@ def get_base_url():
 
 API_URL = get_base_url()
 
-def is_server_running():
-    """Check if the LM Studio server is running on port 8080."""
-    url = API_URL
+def check():
+    """
+    Check if everything is valid before running the LM Studio model.
+    - Ensure the server is connected and running.
+    - Add additional checks as needed.
+    """
+    # Define the LM Studio server URL (adjust if needed)
+    LM_STUDIO_SERVER_URL = API_URL
+    
     try:
-        response = requests.get(url, timeout=2)
+        # Attempt to connect to the LM Studio server
+        response = requests.get(LM_STUDIO_SERVER_URL, timeout=5)
+        
+        # Check if the server responds with a valid status code
         if response.status_code == 200:
+            print("LM Studio server is running and available.")
             return True
+        else:
+            print(f"Error: LM Studio server responded with status code {response.status_code}")
+            return False
+
     except requests.ConnectionError:
-        pass
-    return False
+        print("Error: Could not connect to LM Studio server. Is it running?")
+        return False
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return False
+
+    # Add more checks as necessary
+    print("All checks passed.")
+    return True
 
 MAX_HISTORY_LENGTH = 5
 conversation_history = []
