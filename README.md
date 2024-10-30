@@ -1,11 +1,11 @@
 # YouJin(^-^)
 
-YouJin utilizes **Llama** as the backend AI model integrated with a frontend chat interface. The coordinate system serves as a mechanism for the AI to navigate and access data stored through a custom terminal interface. Additional features will be implemented in future updates to expand the terminal's functionality, allowing for more dynamic interaction with the AI.
+YouJin utilizes **Llama** as the backend NLP integrated with a frontend chat interface. The coordinate system serves as a mechanism for the Bot to navigate and access data stored through a custom terminal interface. Additional features will be implemented in future updates to improve the Agent and terminal's functionality, allowing for more dynamic interactions, namely, the inclusion of an enhanced web scraper, making use of the Grover's search algorithm, and the implementation of Game theoretic algorithms to handle multiple user interactions.
 
 ## Project Structure
-- **Frontend**: A chat interface for interacting with the AI.
-- **Backend**: Powered by Llama, handling AI processing and responses.
-- **Terminal**: Uses a coordinate system to manage data storage and AI navigation.
+- **Frontend**: The interface/GUI for interacting with the Bot.
+- **Backend**: Powered by Llama as the NLP, handling AI processing and responses.
+- **Terminal**: Uses a coordinate system to manage data storage/retrieval and encryption of chats.
 
 ## Getting Started
 
@@ -76,6 +76,13 @@ The project runs in two parts: the frontend (user interface) and the backend (AP
     python app.py
     ```
 
+3. Select an AI method:
+    * After starting the backend, the terminal will prompt you to select the AI method to use.
+        * **LM Studio**: If selected, ensure that the LM Studio server is running (Open LM studio and run a server for the ai on port 8080).
+        * **Local Model**: If selected, ensure you have a local model set up in the local_ai/ directory with the adjusted run_model.py file.
+        * **User Input**: This option allows manual input via the terminal (useful for debugging or fallback).
+    The backend server will run on http://localhost:5000 and handle AI logic, processing messages sent from the frontend.
+
 This will start the backend server on http://localhost:5000. It will handle the AI logic and process the messages sent from the frontend.
 
 
@@ -120,5 +127,5 @@ deactivate
 
 ## Future Development
 
-* Backend Expansion: Future updates will include integration with the Llama AI for more advanced natural language processing and data retrieval.
+* Backend Expansion: Future updates will include integration with Llama as the NLP, enhancement of web scraping capabilities with Grover's search algorithm, and possible implementation of Game Theory to handle interactions with multiple users.
 * Terminal Interface: The terminal will be enhanced with additional commands, enabling more efficient data navigation through the coordinate system.

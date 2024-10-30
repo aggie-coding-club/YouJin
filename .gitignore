@@ -1,9 +1,14 @@
 # Ignore virtual environment directory
 venv/
+linEnv/
+
+# Environment variables
+.env
 
 # Ignore Python cache files
 __pycache__/
 *.py[cod]
+*$py.class
 
 # Ignore IDE/editor configurations
 .idea/
@@ -13,3 +18,5 @@ __pycache__/
 .DS_Store
 
 # Ignore any other unnecessary files or directories
+terminal/data/*
+backend/ai_methods/local_ai/*
