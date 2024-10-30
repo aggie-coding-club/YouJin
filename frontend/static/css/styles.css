@@ -17,17 +17,42 @@
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         background-color: #0D151F;
         color: #FAF9F6;
+        position: relative;
     }
 
     #chat-header {
         padding: 13px;
         background-color: #0A111C;
         color: #FFFFFF;
-        text-align: center;
+        position: relative; /* Allow child elements to position absolutely */
         border-top-left-radius: 18px;
         border-top-right-radius: 18px;
         font-size: 18px;
+        display: flex;
+        justify-content: center; /* Centers the "ChatBot" text */
+        align-items: center;
     }
+    
+    /* This positions the button inside the header */
+    #new-chat-button {
+        position: absolute;  /* Now positions relative to the #chat-header */
+        top: 23px;            /* Center vertically within the header */
+        right: 1px;         /* Align to the right edge */
+        transform: translateY(-50%);  /* Vertically center it */
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #FFFFFF;
+    }
+    
+    #new-chat-button i {
+        font-size: 24px;      /* Icon size */
+    }
+    
+    #new-chat-button:hover {
+        color: #0d5497;  /* Change color on hover */
+    }
+    
 
     #chatbox {
         height: 500px;
