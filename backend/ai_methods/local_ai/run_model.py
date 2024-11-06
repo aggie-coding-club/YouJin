@@ -9,8 +9,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # Build the full path to the model file inside ai/models/
 MODEL_PATH = os.path.join(BASE_DIR, 'models', 'Llama-3.2-3B-Instruct-Q8_0.gguf')
 
-# Print the model path to verify
-print(f"Loading model from: {MODEL_PATH}")
+# Variable to hold the model instance
+llm = None
 
 def check():
     """
@@ -23,23 +23,25 @@ def check():
         print(f"Error: Model file not found at {MODEL_PATH}")
         return False
 
-    # Check for any additional conditions (e.g., system resources, environment variables)
-    # Additional checks can be added here
-
     print("All checks passed.")
     return True
 
-
-# Initialize the model with GPU acceleration
-llm = Llama(
-    model_path=MODEL_PATH,
-    n_threads=4,
-    n_ctx=2048,
-    n_batch=512,
-    use_mlock=True,
-    n_gpu_layers=0,  # Adjust based on your GPU's VRAM
-    verbose=False    # Suppresses informational logs
-)
+def load_model():
+    """Load the model into the global llm variable."""
+    global llm
+    if llm is None:
+        print(f"Loading model from: {MODEL_PATH}")
+        llm = Llama(
+            model_path=MODEL_PATH,
+            n_threads=4,
+            n_ctx=2048,
+            n_batch=512,
+            use_mlock=True,
+            n_gpu_layers=0,  # Adjust based on your GPU's VRAM
+            verbose=False    # Suppresses informational logs
+        )
+    else:
+        print("Model is already loaded.")
 
 MAX_HISTORY_LENGTH = 5
 conversation_history = []
@@ -57,8 +59,10 @@ def build_prompt(messages):
     
     return prompt
 
-
 def process_input(user_message):
+    # Load the model if not already loaded
+    load_model()
+
     # Add the user message to conversation history
     conversation_history.append({'role': 'user', 'content': user_message})
 
