@@ -1,5 +1,5 @@
        /* defines styles using css*/
-       body {
+    body {
         font-family: 'Roboto', sans-serif;
         background-color: #1D2A37;
         margin: 0;
@@ -20,40 +20,60 @@
         position: relative;
     }
 
+    /* Chat Header Styling */
     #chat-header {
         padding: 13px;
         background-color: #0A111C;
         color: #FFFFFF;
-        position: relative; /* Allow child elements to position absolutely */
         border-top-left-radius: 18px;
         border-top-right-radius: 18px;
         font-size: 18px;
         display: flex;
-        justify-content: center; /* Centers the "ChatBot" text */
         align-items: center;
+        justify-content: space-between; /* Space out elements evenly */
     }
-    
-    /* This positions the button inside the header */
+
+    /* Left Button (New Chat) */
     #new-chat-button {
-        position: absolute;  /* Now positions relative to the #chat-header */
-        top: 23px;            /* Center vertically within the header */
-        right: 1px;         /* Align to the right edge */
-        transform: translateY(-50%);  /* Vertically center it */
         background: none;
         border: none;
         cursor: pointer;
         color: #FFFFFF;
+        margin-right: 20px; /* Space between button and title */
     }
-    
-    #new-chat-button i {
-        font-size: 24px;      /* Icon size */
-    }
-    
-    #new-chat-button:hover {
-        color: #0d5497;  /* Change color on hover */
-    }
-    
 
+    #new-chat-button i {
+        font-size: 24px;
+    }
+
+    #new-chat-button:hover {
+        color: #0d5497;
+    }
+
+    /* Right Button (Old Chat or Placeholder) */
+    #old-chat-button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #FFFFFF;
+        margin-left: 20px; /* Space between title and button */
+    } 
+
+    #old-chat-button i {
+        font-size: 24px;
+    }
+
+    #old-chat-button:hover {
+        color: #0d5497;
+    }
+
+    /* Title Styling */
+    #chat-title {
+        flex-grow: 1; /* Takes up remaining space to stay centered */
+        text-align: center;
+        padding: 0 20px; /* Adds space on both sides of the title */
+    }
+    
     #chatbox {
         height: 500px;
         overflow-y: auto;
