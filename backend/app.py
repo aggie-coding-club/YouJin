@@ -8,7 +8,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(BASE_DIR, '..'))
 sys.path.append(PROJECT_ROOT)
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response, stream_with_context
 from flask_cors import CORS
 from ai_type import AI_Type  # Import the AI_Type class
 from terminal.terminal_class import Terminal
@@ -31,7 +31,6 @@ def select_ai_method():
 
     available_ais = ai_system.get_available_ais()
 
-    # Include 'user_input' as an option, so it can be explicitly selected
     print("Available AI methods:")
     for idx, ai_name in enumerate(available_ais, start=1):
         print(f"{idx}. {ai_name}")
@@ -41,7 +40,7 @@ def select_ai_method():
             choice = int(input("Select an AI method by entering the corresponding number: "))
             if 1 <= choice <= len(available_ais):
                 selected_ai_method = available_ais[choice - 1]
-                os.environ["SELECTED_AI_METHOD"] = selected_ai_method  # Store the selection in an environment variable
+                os.environ["SELECTED_AI_METHOD"] = selected_ai_method
                 print(f"Selected AI method: {selected_ai_method}")
                 return
             else:
@@ -61,17 +60,39 @@ def get_response():
     data = request.get_json()
     user_message = data.get('message')
 
-    # Run the selected AI and get the response
-    bot_response = ai_system.run_selected_ai(selected_ai_method, user_message)
+    # Run the selected AI and get the response or response generator
+    response = ai_system.run_selected_ai(selected_ai_method, user_message)
 
-    # Store the conversation block using the Terminal object
-    conversation_block = {"user": user_message, "bot": bot_response}
-    terminal.store_conversation_block(conversation_block)
+    if isinstance(response, str):
+        # Check if the selected method is "user_input" and return plain text
+        if selected_ai_method == "user_input":
+            conversation_block = {"user": user_message, "bot": response}
+            terminal.store_conversation_block(conversation_block)
+            return response  # Return as plain text for user input
 
-    # Return the response as JSON
-    return jsonify({'response': bot_response})
+        # Non-streaming response for other methods: Return as JSON
+        conversation_block = {"user": user_message, "bot": response}
+        terminal.store_conversation_block(conversation_block)
+        return jsonify({'response': response})
+    
+    elif hasattr(response, '__iter__') and not isinstance(response, str):
+        # Streaming response: Yield each token
+        def generate():
+            bot_response = ''
+            for token in response:
+                bot_response += token
+                yield token
+            # Store the entire response after streaming
+            conversation_block = {"user": user_message, "bot": bot_response}
+            terminal.store_conversation_block(conversation_block)
+
+        return Response(stream_with_context(generate()), mimetype='text/plain')
+    
+    else:
+        # Fallback if response format is unexpected
+        return jsonify({'error': 'Unexpected response format from AI method.'}), 500
+
 
 if __name__ == '__main__':
-    # Prompt the user to select an AI method when the app starts
     select_ai_method()
     app.run(port=5000, debug=True, threaded=True)
