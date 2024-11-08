@@ -35,7 +35,7 @@ To ensure all dependencies are installed in an isolated environment, set up a Py
 - On **macOS/Linux**:
 
     ```bash
-    python3 -m venv venv
+    python -m venv venv
     ```
 
 #### b. Activate the Virtual Environment:
