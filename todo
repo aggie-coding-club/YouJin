@@ -55,3 +55,14 @@ Recognizes the instruction to store a note.
 Sends store_block command with the note to the terminal.
 Terminal confirms storage.
 AI responds to the user: "I've stored your note."
+
+
+Need to:
+
+Fix font, fix spacing 
+
+Then implement button functionality. New chat creates a new key that all chats under this key get stored in an array based on coordinate
+
+Old chat button lets you input a key and brings up all chat blocks within the array of coordinates back to this chat. (also need to make sure ai gets context again)
+
+Then implement a new tab on the frontend that lets you fidget with the terminal. Maybe something that lets you navigate the coordinates.

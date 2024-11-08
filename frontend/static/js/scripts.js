@@ -21,24 +21,28 @@ function adjustInputBoxHeight() {
     }
 }
 
-// Modify sendMessage to handle streaming response
+// Function to parse markdown for bold, italics, and headings
+function parseMarkdown(text) {
+    return marked.parse(text);
+}
+
 function sendMessage() {
     const chatbox = document.getElementById('chatbox');
     const message = inputbox.value.trim();
 
     if (message === '') return;
 
-    // Append user message to chat area
+    // Parse and append user message with markdown formatting
     const userMessageDiv = document.createElement('div');
     userMessageDiv.classList.add('message', 'user-message');
-    userMessageDiv.textContent = message;
+    userMessageDiv.innerHTML = parseMarkdown(message);  // Use innerHTML for parsed markdown content
     chatbox.appendChild(userMessageDiv);
 
     // Clear input box and reset height
     inputbox.value = '';
-    inputbox.style.height = 'auto';  // Reset to default height
+    inputbox.style.height = 'auto';
 
-    // Append bot message div to chat area
+    // Append bot message div for the streaming response
     const botMessageDiv = document.createElement('div');
     botMessageDiv.classList.add('message', 'bot-message');
     chatbox.appendChild(botMessageDiv);
@@ -57,15 +61,27 @@ function sendMessage() {
     .then(response => {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
+        let accumulatedResponse = '';  // Accumulate chunks here
+
         function read() {
             reader.read().then(({ done, value }) => {
                 if (done) {
+                    // Final update with the parsed markdown of the full response
+                    botMessageDiv.innerHTML = parseMarkdown(accumulatedResponse);
+                    chatbox.scrollTop = chatbox.scrollHeight; // Auto-scroll to the bottom
                     return;
                 }
+
+                // Decode and accumulate the chunk
                 const chunk = decoder.decode(value, { stream: true });
-                botMessageDiv.textContent += chunk;
-                chatbox.scrollTop = chatbox.scrollHeight; // Auto-scroll to the bottom
-                read(); // Continue reading
+                accumulatedResponse += chunk;
+
+                // Parse markdown of the accumulated response and update bot message div
+                botMessageDiv.innerHTML = parseMarkdown(accumulatedResponse);
+                chatbox.scrollTop = chatbox.scrollHeight;
+
+                // Continue reading
+                read();
             }).catch(error => {
                 console.error('Error reading stream:', error);
             });
@@ -74,7 +90,6 @@ function sendMessage() {
     })
     .catch(error => {
         console.error('Error:', error);
-        // Optionally, display an error message to the user
     });
 }
 
