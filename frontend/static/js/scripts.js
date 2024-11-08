@@ -21,13 +21,35 @@ function adjustInputBoxHeight() {
     }
 }
 
-// Function to parse markdown for bold, italics, and headings
-function parseMarkdown(text) {
-    return marked.parse(text);
+// Function to parse markdown with optional image exclusion
+function parseMarkdown(text, excludeImages = false) {
+    if (excludeImages) {
+        const renderer = new marked.Renderer();
+
+        // Override image rendering to exclude images
+        renderer.image = function(href, title, text) {
+            return `<em>[Image: ${text}]</em>`;
+        };
+
+        return marked.parse(text, { renderer: renderer });
+    } else {
+        // Default parsing including images
+        return marked.parse(text);
+    }
 }
 
+// Autoscroll control
+let isAutoScrollEnabled = true;
+const chatbox = document.getElementById('chatbox');
+
+// Event listener to detect user scrolling
+chatbox.addEventListener('scroll', () => {
+    const threshold = 50; // Adjust this value as needed
+    const atBottom = chatbox.scrollHeight - chatbox.scrollTop - chatbox.clientHeight <= threshold;
+    isAutoScrollEnabled = atBottom;
+});
+
 function sendMessage() {
-    const chatbox = document.getElementById('chatbox');
     const message = inputbox.value.trim();
 
     if (message === '') return;
@@ -35,7 +57,7 @@ function sendMessage() {
     // Parse and append user message with markdown formatting
     const userMessageDiv = document.createElement('div');
     userMessageDiv.classList.add('message', 'user-message');
-    userMessageDiv.innerHTML = parseMarkdown(message);  // Use innerHTML for parsed markdown content
+    userMessageDiv.innerHTML = parseMarkdown(message);
     chatbox.appendChild(userMessageDiv);
 
     // Clear input box and reset height
@@ -48,7 +70,9 @@ function sendMessage() {
     chatbox.appendChild(botMessageDiv);
 
     // Scroll to the bottom of the chat area
-    chatbox.scrollTop = chatbox.scrollHeight;
+    if (isAutoScrollEnabled) {
+        chatbox.scrollTop = chatbox.scrollHeight;
+    }
 
     // Send the message to the backend and handle streaming response
     fetch('http://localhost:5000/get-response', {
@@ -61,14 +85,16 @@ function sendMessage() {
     .then(response => {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
-        let accumulatedResponse = '';  // Accumulate chunks here
+        let accumulatedResponse = '';
 
         function read() {
             reader.read().then(({ done, value }) => {
                 if (done) {
-                    // Final update with the parsed markdown of the full response
+                    // Final update with the parsed markdown of the full response including images
                     botMessageDiv.innerHTML = parseMarkdown(accumulatedResponse);
-                    chatbox.scrollTop = chatbox.scrollHeight; // Auto-scroll to the bottom
+                    if (isAutoScrollEnabled) {
+                        chatbox.scrollTop = chatbox.scrollHeight;
+                    }
                     return;
                 }
 
@@ -76,9 +102,13 @@ function sendMessage() {
                 const chunk = decoder.decode(value, { stream: true });
                 accumulatedResponse += chunk;
 
-                // Parse markdown of the accumulated response and update bot message div
-                botMessageDiv.innerHTML = parseMarkdown(accumulatedResponse);
-                chatbox.scrollTop = chatbox.scrollHeight;
+                // Parse markdown excluding images during streaming
+                botMessageDiv.innerHTML = parseMarkdown(accumulatedResponse, true);
+
+                // Scroll if the user is at the bottom
+                if (isAutoScrollEnabled) {
+                    chatbox.scrollTop = chatbox.scrollHeight;
+                }
 
                 // Continue reading
                 read();
@@ -90,6 +120,7 @@ function sendMessage() {
     })
     .catch(error => {
         console.error('Error:', error);
+        botMessageDiv.textContent = 'Error: Unable to receive response.';
     });
 }
 
@@ -103,7 +134,7 @@ inputbox.addEventListener('keydown', function(event) {
     // For Shift+Enter, do nothing and allow the default behavior (newline insertion)
 });
 
-// Theme toggle functions (unchanged)
+// Theme toggle functions
 function toggleTheme() {
     const checkbox = document.getElementById('theme-checkbox');
     document.body.classList.toggle('light-theme');
