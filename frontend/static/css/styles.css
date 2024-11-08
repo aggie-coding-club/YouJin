@@ -131,7 +131,14 @@
         flex-grow: 1;
         font-size: 16px;
         outline-color: #19362D;
+    
+        /* Set height and scrolling behavior */
+        min-height: 40px;  /* Initial height (can adjust based on preferred look) */
+        max-height: 160px; /* Approx. 10 lines */
+        overflow-y: auto;  /* Adds vertical scroll only when needed */
+        resize: vertical;  /* Allows users to manually resize the input box if desired */
     }
+    
 
     button {
         padding: 13px 26px;
