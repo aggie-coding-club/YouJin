@@ -84,36 +84,20 @@ def process_input(user_message):
 
         # Initialize an empty response
         assistant_response = ""
-        print("AI: ", end="", flush=True)
 
         # Stream the response word by word
         for token in output:
-            # Correctly access the text from the streamed token
+            # Access the text from the streamed token
             word = token['choices'][0]['text']
-            print(word, end="", flush=True)
             assistant_response += word
-            time.sleep(0.05)  # Delay for a more natural typing effect
+            # Yield the word to the caller
+            yield word
 
         # Add the assistant's response to the conversation history
         conversation_history.append({'role': 'assistant', 'content': assistant_response})
 
     except Exception as e:
         print(f"\nError: {e}")
-        assistant_response = "I'm sorry, something went wrong."
-
-    # Return the assistant's full response
-    return assistant_response
-
-# Main chat loop for testing
-if __name__ == "__main__":
-    while True:
-        # Get user input
-        user_input = input("\nUser: ")
-
-        # Exit condition
-        if user_input.lower() == "exit":
-            print("Ending chat.")
-            break
-
-        # Process the input and print the assistant's response
-        process_input(user_input)
+        error_message = "I'm sorry, something went wrong."
+        yield error_message
+        conversation_history.append({'role': 'assistant', 'content': error_message})
