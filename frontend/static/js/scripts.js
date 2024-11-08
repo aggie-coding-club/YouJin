@@ -48,8 +48,17 @@ function sendMessage() {
 document.getElementById('inputbox').addEventListener('keypress', function(event) {
     // Check if Enter is pressed
     if (event.key === "Enter") {
-        event.preventDefault(); // Prevent default action
-        sendMessage();
+        if(event.shiftKey){
+            event.preventDefault()
+            const inputbox = document.getElementById('inputbox')
+            inputbox.value += "\n"
+
+        }else{
+            event.preventDefault(); // Prevent default action
+            sendMessage();
+
+        }
+        
     }
 });
 
