@@ -1,9 +1,31 @@
 // frontend/static/js/scripts.js
 
-// TODO: Implement form validation for message input
+// Get the input box element
+const inputbox = document.getElementById('inputbox');
+
+// Automatically adjust the height of the input box based on content
+inputbox.addEventListener('input', adjustInputBoxHeight);
+
+// Listen for Shift+Enter to adjust height immediately
+inputbox.addEventListener('keypress', function(event) {
+    if (event.key === "Enter" && event.shiftKey) {
+        adjustInputBoxHeight();
+    }
+});
+
+function adjustInputBoxHeight() {
+    // Reset height to 'auto' to calculate based on content
+    inputbox.style.height = 'auto';
+
+    // Set height only if the scrollHeight exceeds the clientHeight
+    if (inputbox.scrollHeight > inputbox.clientHeight) {
+        inputbox.style.height = Math.min(inputbox.scrollHeight, 160) + 'px';
+    }
+}
+
+// Modify sendMessage to reset input box height after sending
 function sendMessage() {
     const chatbox = document.getElementById('chatbox');
-    const inputbox = document.getElementById('inputbox');
     const message = inputbox.value.trim();
 
     if (message === '') return;
@@ -14,14 +36,15 @@ function sendMessage() {
     userMessageDiv.textContent = message;
     chatbox.appendChild(userMessageDiv);
 
-    // Clear input box
+    // Clear input box and reset height
     inputbox.value = '';
+    inputbox.style.height = 'auto';  // Reset to default height
 
     // Scroll to the bottom of the chat area
     chatbox.scrollTop = chatbox.scrollHeight;
 
     // Send the message to the backend
-    fetch('http://localhost:5000/get-response', {  // Updated URL with full backend address
+    fetch('http://localhost:5000/get-response', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
