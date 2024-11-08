@@ -1,6 +1,7 @@
-       /* defines styles using css*/
+    /* defines styles using css*/
     body {
         font-family: 'Roboto', sans-serif;
+        font-weight: 400;
         background-color: #1D2A37;
         margin: 0;
         padding: 0;
@@ -30,7 +31,7 @@
         font-size: 18px;
         display: flex;
         align-items: center;
-        justify-content: space-between; /* Space out elements evenly */
+        justify-content: space-between;
     }
 
     /* Left Button (New Chat) */
@@ -119,13 +120,15 @@
     }
 
     #inputbox {
-        flex-grow: 1;
+        font-family: 'Roboto', sans-serif;
+        font-weight: 400;
+        color: #FFFFFF;
+        background-color: #1A2835;
         padding: 13px;
         border: none;
         border-radius: 13px;
         margin-right: 13px;
-        color: #FFFFFF;
-        background-color: #1A2835;
+        flex-grow: 1;
         font-size: 16px;
         outline-color: #19362D;
     }
