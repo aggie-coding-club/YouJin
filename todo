@@ -64,3 +64,6 @@ Implement button functionality. New chat creates a new key that all chats under 
 Old chat button lets you input a key and brings up all chat blocks within the array of coordinates back to this chat. (also need to make sure ai gets context again)
 
 Then implement a new tab on the frontend that lets you fidget with the terminal. Maybe something that lets you navigate the coordinates.
+
+
+Dynamic 'remembering' for ai (4096 tokens total, when within 1000 condense 100 to 10 something like that)

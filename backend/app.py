@@ -22,50 +22,47 @@ terminal = Terminal()
 # Initialize the AI system
 ai_system = AI_Type()
 
-# Store the selected AI method in an environment variable
-def select_ai_method():
-    """Prompt the user in the terminal to select an AI method, including 'user_input'."""
-    if os.getenv("SELECTED_AI_METHOD"):
-        print(f"AI method already selected: {os.getenv('SELECTED_AI_METHOD')}")
-        return  # Don't ask again if the method is already selected
+# Route to provide available AI methods
+@app.route('/get-ai-methods', methods=['GET'])
+def get_ai_methods():
+    """Return the list of available AI methods."""
+    available_methods = ai_system.get_available_ais()
+    return jsonify({'methods': available_methods})
 
-    available_ais = ai_system.get_available_ais()
+# Route to set the AI method
+@app.route('/set-ai-method', methods=['POST'])
+def set_ai_method():
+    data = request.get_json()
+    selected_ai_method = data.get('ai_method')
 
-    print("Available AI methods:")
-    for idx, ai_name in enumerate(available_ais, start=1):
-        print(f"{idx}. {ai_name}")
+    # Validate the selected AI method
+    if not selected_ai_method:
+        return jsonify({'error': 'No AI method selected.'}), 400
+    if selected_ai_method not in ai_system.get_available_ais():
+        return jsonify({'error': 'Selected AI method is not available.'}), 400
 
-    while True:
-        try:
-            choice = int(input("Select an AI method by entering the corresponding number: "))
-            if 1 <= choice <= len(available_ais):
-                selected_ai_method = available_ais[choice - 1]
-                os.environ["SELECTED_AI_METHOD"] = selected_ai_method
-                print(f"Selected AI method: {selected_ai_method}")
-                return
-            else:
-                print("Invalid selection. Please try again.")
-        except ValueError:
-            print("Invalid input. Please enter a number.")
+    # Initialize the selected AI method
+    ai_system.set_selected_ai(selected_ai_method)
+
+    return jsonify({'status': 'AI method set successfully.'})
 
 # Route to process user input
 @app.route('/get-response', methods=['POST'])
 def get_response():
-    """Process user input using the selected AI method."""
-    selected_ai_method = os.getenv("SELECTED_AI_METHOD")
-    
-    if not selected_ai_method:
-        return jsonify({'error': 'No AI method selected. Please select an AI method first.'}), 400
-
+    """Process user input using the currently selected AI method."""
     data = request.get_json()
     user_message = data.get('message')
 
+    # Check if an AI method is selected
+    if not ai_system.current_ai:
+        return jsonify({'error': 'No AI method selected. Please select an AI method to proceed.'}), 400
+
     # Run the selected AI and get the response or response generator
-    response = ai_system.run_selected_ai(selected_ai_method, user_message)
+    response = ai_system.run_selected_ai(user_message)
 
     if isinstance(response, str):
         # Check if the selected method is "user_input" and return plain text
-        if selected_ai_method == "user_input":
+        if ai_system.current_ai == "user_input":
             conversation_block = {"user": user_message, "bot": response}
             terminal.store_conversation_block(conversation_block)
             return response  # Return as plain text for user input
@@ -74,9 +71,9 @@ def get_response():
         conversation_block = {"user": user_message, "bot": response}
         terminal.store_conversation_block(conversation_block)
         return jsonify({'response': response})
-    
+
     elif hasattr(response, '__iter__') and not isinstance(response, str):
-        # Streaming response: Yield each token
+        # Handle streaming response
         def generate():
             bot_response = ''
             for token in response:
@@ -89,10 +86,8 @@ def get_response():
         return Response(stream_with_context(generate()), mimetype='text/plain')
     
     else:
-        # Fallback if response format is unexpected
+        # Unexpected response format from AI
         return jsonify({'error': 'Unexpected response format from AI method.'}), 500
 
-
 if __name__ == '__main__':
-    select_ai_method()
     app.run(port=5000, debug=True, threaded=True)

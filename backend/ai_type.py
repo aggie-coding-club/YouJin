@@ -13,6 +13,8 @@ class AI_Type:
         
         # Dictionary to store available AI methods
         self.ai_methods = {}
+        # Variable to store the currently selected AI method
+        self.current_ai = None
         # Check which AI methods are available on initialization
         self.check_available_ais()
 
@@ -38,17 +40,23 @@ class AI_Type:
         """Return a list of available AI methods."""
         return list(self.ai_methods.keys())
 
-    def run_selected_ai(self, selected_ai, user_message):
-        """Run the selected AI method based on user choice."""
-        print(f"run_selected_ai called with selected_ai: {selected_ai}")
-        print(f"Available AI methods: {list(self.ai_methods.keys())}")
-        
-        if selected_ai in self.ai_methods:
-            print(f"Executing AI method: {selected_ai}")
-            return self.ai_methods[selected_ai](user_message)
+    def set_selected_ai(self, ai_method):
+        """Set the currently selected AI method."""
+        print(f"Setting selected AI method to: {ai_method}")
+        if ai_method in self.ai_methods:
+            self.current_ai = ai_method
         else:
-            print(f"Selected AI '{selected_ai}' is not available. Using fallback.")
-            return self.run_user_input(user_message)
+            print(f"AI method '{ai_method}' is not available. Defaulting to 'user_input'.")
+            self.current_ai = 'user_input'  # Default to fallback
+
+    def run_selected_ai(self, user_message):
+        """Run the selected AI method based on current selection."""
+        if not self.current_ai:
+            print("No AI method has been selected. Defaulting to 'user_input'.")
+            self.current_ai = 'user_input'
+
+        print(f"Executing AI method: {self.current_ai}")
+        return self.ai_methods[self.current_ai](user_message)
     
     ######## END UTILITIES #######
 
