@@ -1,10 +1,10 @@
-// Get the input box element
+// Get the input box and chatbox elements
 const inputbox = document.getElementById('inputbox');
+const chatbox = document.getElementById('chatbox');
+let isAutoScrollEnabled = true;
 
 // Automatically adjust the height of the input box based on content
 inputbox.addEventListener('input', adjustInputBoxHeight);
-
-// Listen for Shift+Enter to adjust height immediately
 inputbox.addEventListener('keypress', function(event) {
     if (event.key === "Enter" && event.shiftKey) {
         adjustInputBoxHeight();
@@ -12,10 +12,7 @@ inputbox.addEventListener('keypress', function(event) {
 });
 
 function adjustInputBoxHeight() {
-    // Reset to allow shrinking if needed
     inputbox.style.height = 'auto';
-
-    // Set height only if the scrollHeight exceeds the clientHeight
     if (inputbox.scrollHeight > inputbox.clientHeight) {
         inputbox.style.height = Math.min(inputbox.scrollHeight, 160) + 'px';
     }
@@ -23,38 +20,62 @@ function adjustInputBoxHeight() {
 
 // Function to parse markdown with optional image exclusion
 function parseMarkdown(text, excludeImages = false) {
-    if (excludeImages) {
-        const renderer = new marked.Renderer();
-
-        // Override image rendering to exclude images
-        renderer.image = function(href, title, text) {
-            return `<em>[Image: ${text}]</em>`;
-        };
-
-        return marked.parse(text, { renderer: renderer });
-    } else {
-        // Default parsing including images
-        return marked.parse(text);
+    const renderer = excludeImages ? new marked.Renderer() : null;
+    if (excludeImages && renderer) {
+        renderer.image = (href, title, text) => `<em>[Image: ${text}]</em>`;
     }
+    return marked.parse(text, { renderer });
 }
 
 // Autoscroll control
-let isAutoScrollEnabled = true;
-const chatbox = document.getElementById('chatbox');
-
-// Event listener to detect user scrolling
 chatbox.addEventListener('scroll', () => {
-    const threshold = 50; // Adjust this value as needed
+    const threshold = 50;
     const atBottom = chatbox.scrollHeight - chatbox.scrollTop - chatbox.clientHeight <= threshold;
     isAutoScrollEnabled = atBottom;
 });
 
+// Get references to elements
+const aiMethodSelect = document.getElementById('ai-method-select');
+const sendButton = document.getElementById('send-button');
+
+// Event listener for AI method selection
+aiMethodSelect.addEventListener('change', function() {
+    const selectedAiMethod = aiMethodSelect.value;
+    if (selectedAiMethod) {
+        // Enable the send button
+        sendButton.disabled = false;
+
+        // // Save the selected AI method in localStorage
+        // localStorage.setItem('ai_method', selectedAiMethod);
+
+        // Send request to backend to set AI method
+        fetch('http://localhost:5000/set-ai-method', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ ai_method: selectedAiMethod })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'AI method set successfully.') {
+                console.log('AI method set on backend.');
+            } else {
+                console.error('Error setting AI method on backend:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error setting AI method on backend:', error);
+        });
+    }
+});
+
+// Send Message with Selected AI Method
 function sendMessage() {
     const message = inputbox.value.trim();
-
     if (message === '') return;
 
-    // Parse and append user message with markdown formatting
+    // Append user message
     const userMessageDiv = document.createElement('div');
     userMessageDiv.classList.add('message', 'user-message');
     userMessageDiv.innerHTML = parseMarkdown(message);
@@ -64,23 +85,24 @@ function sendMessage() {
     inputbox.value = '';
     inputbox.style.height = 'auto';
 
-    // Append bot message div for the streaming response
+    // Append bot message placeholder
     const botMessageDiv = document.createElement('div');
     botMessageDiv.classList.add('message', 'bot-message');
     chatbox.appendChild(botMessageDiv);
 
-    // Scroll to the bottom of the chat area
-    if (isAutoScrollEnabled) {
-        chatbox.scrollTop = chatbox.scrollHeight;
-    }
+    // Autoscroll to the bottom if enabled
+    if (isAutoScrollEnabled) chatbox.scrollTop = chatbox.scrollHeight;
 
-    // Send the message to the backend and handle streaming response
+    // Send message to backend
     fetch('http://localhost:5000/get-response', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ message: message })
+        body: JSON.stringify({ 
+            message: message
+            // No need to send ai_method
+        })
     })
     .then(response => {
         const reader = response.body.getReader();
@@ -90,27 +112,16 @@ function sendMessage() {
         function read() {
             reader.read().then(({ done, value }) => {
                 if (done) {
-                    // Final update with the parsed markdown of the full response including images
                     botMessageDiv.innerHTML = parseMarkdown(accumulatedResponse);
-                    if (isAutoScrollEnabled) {
-                        chatbox.scrollTop = chatbox.scrollHeight;
-                    }
+                    if (isAutoScrollEnabled) chatbox.scrollTop = chatbox.scrollHeight;
                     return;
                 }
 
-                // Decode and accumulate the chunk
                 const chunk = decoder.decode(value, { stream: true });
                 accumulatedResponse += chunk;
-
-                // Parse markdown excluding images during streaming
                 botMessageDiv.innerHTML = parseMarkdown(accumulatedResponse, true);
 
-                // Scroll if the user is at the bottom
-                if (isAutoScrollEnabled) {
-                    chatbox.scrollTop = chatbox.scrollHeight;
-                }
-
-                // Continue reading
+                if (isAutoScrollEnabled) chatbox.scrollTop = chatbox.scrollHeight;
                 read();
             }).catch(error => {
                 console.error('Error reading stream:', error);
@@ -124,29 +135,7 @@ function sendMessage() {
     });
 }
 
-// Event listener for Enter key
-inputbox.addEventListener('keydown', function(event) {
-    // Check if Enter is pressed without Shift
-    if (event.key === "Enter" && !event.shiftKey) {
-        event.preventDefault(); // Prevent default Enter behavior
-        sendMessage();          // Send the message
-    }
-    // For Shift+Enter, do nothing and allow the default behavior (newline insertion)
-});
-
-// Theme toggle functions
-function toggleTheme() {
-    const checkbox = document.getElementById('theme-checkbox');
-    document.body.classList.toggle('light-theme');
-    
-    // Save theme preference
-    if (checkbox.checked) {
-        localStorage.setItem('theme', 'light');
-    } else {
-        localStorage.setItem('theme', 'dark');
-    }
-}
-
+// Load available AI methods on page load and set theme
 window.onload = function() {
     const checkbox = document.getElementById('theme-checkbox');
     const savedTheme = localStorage.getItem('theme');
@@ -154,6 +143,86 @@ window.onload = function() {
         document.body.classList.add('light-theme');
         checkbox.checked = true;
     }
+
+    // Initially disable the send button
+    sendButton.disabled = true;
+
+    // Fetch AI methods and populate dropdown
+    fetch('http://localhost:5000/get-ai-methods')
+        .then(response => response.json())
+        .then(data => {
+            const methods = data.methods;
+            const aiMethodSelect = document.getElementById('ai-method-select');
+
+            // Always start with the default option
+            aiMethodSelect.innerHTML = '<option value="" disabled selected>Select a method</option>';
+
+            // Populate dropdown with available methods
+            methods.forEach(method => {
+                const option = document.createElement('option');
+                option.value = method;
+                option.textContent = method;
+                aiMethodSelect.appendChild(option);
+            });
+
+            // const savedMethod = localStorage.getItem('ai_method');
+            // if (savedMethod && methods.includes(savedMethod)) {
+            //     aiMethodSelect.value = savedMethod;
+            //     sendButton.disabled = false;
+            //     aiMethodSelect.dispatchEvent(new Event('change'));
+            // }
+        })
+        .catch(error => {
+            console.error('Error fetching AI methods:', error);
+        });
+};
+
+// Update the AI method change event listener to disable the send button when the default is selected
+aiMethodSelect.addEventListener('change', function() {
+    const selectedAiMethod = aiMethodSelect.value;
+    if (selectedAiMethod) {
+        sendButton.disabled = false;
+
+        // Save the selected AI method in localStorage
+        localStorage.setItem('ai_method', selectedAiMethod);
+
+        // Send request to backend to set AI method
+        fetch('http://localhost:5000/set-ai-method', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ ai_method: selectedAiMethod })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'AI method set successfully.') {
+                console.log('AI method set on backend.');
+            } else {
+                console.error('Error setting AI method on backend:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error setting AI method on backend:', error);
+        });
+    } else {
+        sendButton.disabled = true; // Disable send button if no valid method is selected
+    }
+});
+
+// Event listener for Enter key
+inputbox.addEventListener('keydown', function(event) {
+    if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+    }
+});
+
+// Theme toggle functions
+function toggleTheme() {
+    const checkbox = document.getElementById('theme-checkbox');
+    document.body.classList.toggle('light-theme');
+    localStorage.setItem('theme', checkbox.checked ? 'light' : 'dark');
 }
 
 document.getElementById('theme-checkbox').addEventListener('change', toggleTheme);
