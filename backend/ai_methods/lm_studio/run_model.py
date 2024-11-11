@@ -1,6 +1,7 @@
 import os
 import requests
 import json
+import traceback
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -37,12 +38,14 @@ def build_prompt(messages):
 
 def process_input(user_message):
     conversation_history.append({'role': 'user', 'content': user_message})
+
+    # Build the prompt (if needed)
     prompt = build_prompt(conversation_history)
 
     # API request payload
     payload = {
         "model": "bartowski/Llama-3.2-3B-Instruct-GGUF",
-        "messages": [{"role": "user", "content": user_message}],
+        "messages": conversation_history[-MAX_HISTORY_LENGTH:],  # Send conversation history
         "temperature": 0.8,
         "max_tokens": 512,
         "top_p": 0.95,
@@ -51,6 +54,10 @@ def process_input(user_message):
 
     try:
         response = requests.post(API_URL, json=payload, stream=True)
+        response.raise_for_status()  # Raise an exception for HTTP errors
+
+        assistant_response = ''
+
         for line in response.iter_lines():
             if line:
                 line_content = line.decode('utf-8').lstrip("data: ").strip()
@@ -59,11 +66,15 @@ def process_input(user_message):
                 try:
                     chunk = json.loads(line_content)
                     word = chunk['choices'][0]['delta'].get('content', '')
+                    assistant_response += word
                     yield word
                 except json.JSONDecodeError:
                     continue
 
+        # After generating the response, append it to the conversation history
+        conversation_history.append({'role': 'assistant', 'content': assistant_response})
+
     except Exception as e:
         print(f"Error: {e}")
+        traceback.print_exc()  # This will print the full traceback
         yield "Error in processing your request."
-
