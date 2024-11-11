@@ -77,7 +77,7 @@ The project runs in two parts: the frontend (user interface) and the backend (AP
     ```
 
 3. Select an AI method:
-    * After starting the backend, the terminal will prompt you to select the AI method to use.
+    * After starting the backend, select an active method in the frontend to run a specified llm.
         * **LM Studio**: If selected, ensure that the LM Studio server is running (Open LM studio and run a server for the ai on port 8080).
         * **Local Model**: If selected, ensure you have a local model set up in the local_ai/ directory with the adjusted run_model.py file.
         * **User Input**: This option allows manual input via the terminal (useful for debugging or fallback).
