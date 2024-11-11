@@ -2,9 +2,6 @@ import os
 import importlib.util
 
 class AI_Type:
-    
-    ####### UTILITIES #######
-    
     def __init__(self):
         """Initialize paths and available AI methods."""
         # Paths to run_model.py in various directories
@@ -15,6 +12,11 @@ class AI_Type:
         self.ai_methods = {}
         # Variable to store the currently selected AI method
         self.current_ai = None
+        # Variables to store loaded modules and functions
+        self.lm_studio_module = None
+        self.lm_studio_process_input = None
+        self.local_model_module = None
+        self.local_model_process_input = None
         # Check which AI methods are available on initialization
         self.check_available_ais()
 
@@ -57,28 +59,31 @@ class AI_Type:
 
         print(f"Executing AI method: {self.current_ai}")
         return self.ai_methods[self.current_ai](user_message)
-    
-    ######## END UTILITIES #######
 
-
-    ####### LM STUDIO ########
+    ####### LM STUDIO #######
 
     def check_lm_studio(self):
         """Check if LM Studio AI model is available and the server is running."""
         if os.path.exists(self.lm_studio_path):
             try:
                 # Load the run_model.py module dynamically
-                spec = importlib.util.spec_from_file_location("run_model", self.lm_studio_path)
-                run_model = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(run_model)
-
-                # Call the 'check' function from run_model
-                if hasattr(run_model, 'check'):
-                    return run_model.check()
+                if self.lm_studio_module is None:
+                    spec = importlib.util.spec_from_file_location("lm_studio_run_model", self.lm_studio_path)
+                    lm_studio_run_model = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(lm_studio_run_model)
+                    if hasattr(lm_studio_run_model, 'check'):
+                        if lm_studio_run_model.check():
+                            self.lm_studio_module = lm_studio_run_model
+                            self.lm_studio_process_input = lm_studio_run_model.process_input
+                            return True
+                        else:
+                            print("LM Studio check function returned False.")
+                            return False
+                    else:
+                        print("LM Studio check function is not available in run_model.py.")
+                        return False
                 else:
-                    print("LM Studio check function is not available in run_model.py.")
-                    return False
-
+                    return True  # Module already loaded
             except Exception as e:
                 print(f"Error checking LM Studio: {e}")
                 return False
@@ -89,24 +94,16 @@ class AI_Type:
     def run_lm_studio(self, user_message):
         """Run the LM Studio AI model."""
         try:
-            # Load the run_model.py module dynamically from the lm_studio directory
-            spec = importlib.util.spec_from_file_location("run_model", self.lm_studio_path)
-            run_model = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(run_model)
-
-            # Ensure the run_model has a process_input function
-            if hasattr(run_model, 'process_input'):
-                # Call the process_input function with the user_message
-                return run_model.process_input(user_message)
-            else:
-                print(f"LM Studio does not have a process_input function.")
+            if self.lm_studio_process_input is None:
+                print("LM Studio process_input is not loaded.")
                 return "Error: LM Studio is not properly configured."
+            # Call the process_input function with the user_message
+            return self.lm_studio_process_input(user_message)
         except Exception as e:
             print(f"Error running LM Studio: {e}")
             return "Error processing your request with LM Studio."
 
-    ######## END LM STUDIO #######
-
+    ####### END LM STUDIO #######
 
     ####### LOCAL MODELS #######
 
@@ -115,17 +112,23 @@ class AI_Type:
         if os.path.exists(self.local_model_path):
             try:
                 # Load the run_model.py module dynamically
-                spec = importlib.util.spec_from_file_location("run_model", self.local_model_path)
-                run_model = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(run_model)
-
-                # Call the 'check' function from run_model
-                if hasattr(run_model, 'check'):
-                    return run_model.check()
+                if self.local_model_module is None:
+                    spec = importlib.util.spec_from_file_location("local_model_run_model", self.local_model_path)
+                    local_model_run_model = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(local_model_run_model)
+                    if hasattr(local_model_run_model, 'check'):
+                        if local_model_run_model.check():
+                            self.local_model_module = local_model_run_model
+                            self.local_model_process_input = local_model_run_model.process_input
+                            return True
+                        else:
+                            print("Local model check function returned False.")
+                            return False
+                    else:
+                        print("Local model check function is not available in run_model.py.")
+                        return False
                 else:
-                    print("Local model check function is not available in run_model.py.")
-                    return False
-
+                    return True  # Module already loaded
             except Exception as e:
                 print(f"Error checking local model: {e}")
                 return False
@@ -136,24 +139,16 @@ class AI_Type:
     def run_local_model(self, user_message):
         """Run the local AI model."""
         try:
-            # Load the run_model.py module dynamically from the ai directory
-            spec = importlib.util.spec_from_file_location("run_model", self.local_model_path)
-            run_model = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(run_model)
-
-            # Ensure the run_model has a process_input function
-            if hasattr(run_model, 'process_input'):
-                # Call the process_input function with the user_message
-                return run_model.process_input(user_message)
-            else:
-                print(f"Local model does not have a process_input function.")
+            if self.local_model_process_input is None:
+                print("Local model process_input is not loaded.")
                 return "Error: Local model is not properly configured."
+            # Call the process_input function with the user_message
+            return self.local_model_process_input(user_message)
         except Exception as e:
             print(f"Error running Local AI model: {e}")
             return "Error processing your request with the local model."
 
-    ######## END LOCAL MODELS #######
-
+    ####### END LOCAL MODELS #######
 
     ####### FALLBACK USER INPUT #######
 
@@ -163,4 +158,4 @@ class AI_Type:
         bot_response = input("Your response as AI: ")
         return bot_response
 
-    ######## END FALLBACK USER INPUT #######
+    ####### END FALLBACK USER INPUT #######
