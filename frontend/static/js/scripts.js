@@ -24,7 +24,10 @@ function parseMarkdown(text, excludeImages = false) {
     if (excludeImages && renderer) {
         renderer.image = (href, title, text) => `<em>[Image: ${text}]</em>`;
     }
-    return marked.parse(text, { renderer });
+    
+    // Trim trailing newlines and whitespace after markdown parsing
+    const parsedText = marked.parse(text, { renderer });
+    return parsedText.replace(/\n+$/, ''); // Remove extra trailing newlines
 }
 
 // Autoscroll control
