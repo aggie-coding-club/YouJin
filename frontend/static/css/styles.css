@@ -196,6 +196,7 @@ input:checked + .slider:before {
     background-color: #0E161F;
     display: flex;
     flex-direction: column;
+    white-space: pre-wrap; /* Preserves whitespace and line breaks */
 }
 
 /* Custom Scrollbar */
